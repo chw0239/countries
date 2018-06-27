@@ -42,7 +42,7 @@ def setup():
     switch_features.setSize(20,20)
     switch_features.addListener(switch_featuresListener)
     
-    xyplot = cp5.addButton("scattergramm")
+    xyplot = cp5.addButton("scatter chart")
     xyplot.setPosition(button_x+300,button_y)
     xyplot.setSize(280,20)  
     xyplot.addListener(showXY)
@@ -155,21 +155,15 @@ class Country(object):
     
     @property
     def drawRadius(self):
-        if Country.log_mode_1 > 0:
-            return map(log(self.radius+1), log(Country.minRadius+1), log(Country.maxRadius+1), 10, 100)
-        else :
-            return map(self.radius, Country.minRadius, Country.maxRadius, 10, 100)
+        return map(self.radius, Country.minRadius, Country.maxRadius, 10, 100)
     
     @property
     def drawColor(self):
-        if Country.log_mode_2 > 0:
-            return map(log(self.color_+1), log(Country.minColor+1), log(Country.maxColor+1), 100, 0)
-        else :
-            return map(self.color_, Country.minColor, Country.maxColor, 100, 0)
+        return map(self.color_, Country.minColor, Country.maxColor, 100, 0)
     
     def draw(self):
         try:
-            if( self.drawRadius == self.drawRadius):
+            if( self.drawRadius == self.drawRadius and self.drawColor==self.drawColor):
                 colorMode(HSB, 360, 100, 100, 255);
                 fill(self.drawColor,100,100,150)
                 ellipse(self.x, self.y, self.drawRadius, self.drawRadius)
@@ -312,6 +306,8 @@ class XYSketch(PApplet):
         self.countries = c
         self.cx = []
         self.cy = []
+        self.cxl = []
+        self.cyl = []
         self.feature_0 = ''
         self.feature_1 =''
         self.countryName = ''
@@ -329,19 +325,21 @@ class XYSketch(PApplet):
         print('log1'+str(Country.log_mode_1))
         print('log2'+str(Country.log_mode_2))
         for country in p.countries:
-            if(Country.log_mode_1==0):
-                p.cx.append( p.map(country.radius, Country.minRadius, Country.maxRadius,110,XYSketch.pw-100))
-            else:
-                p.cx.append( p.map(p.log(country.radius+1), p.log(Country.minRadius+1), p.log(Country.maxRadius+1),110,XYSketch.pw-100))
-            if(Country.log_mode_2==0):
-                p.cy.append( p.map(country.color_, Country.minColor, Country.maxColor,XYSketch.ph-210,100))
-            else:
-                p.cy.append( p.map(p.log(country.color_+1), p.log(Country.minColor+1), p.log(Country.maxColor+1),XYSketch.ph-210,100))
+
+            p.cx.append( p.map(country.radius, Country.minRadius, Country.maxRadius,110,XYSketch.pw-100))
+            p.cxl.append( p.map(p.log(country.radius+1), p.log(Country.minRadius+1), p.log(Country.maxRadius+1),110,XYSketch.pw-100))
+
+            p.cy.append( p.map(country.color_, Country.minColor, Country.maxColor,XYSketch.ph-210,100))
+            p.cyl.append( p.map(p.log(country.color_+1), p.log(Country.minColor+1), p.log(Country.maxColor+1),XYSketch.ph-210,100))
             
         
     def draw(p):
         p.background(160), 
         p.colorMode(RGB, 255, 255, 255,255)
+        
+        p.fill(0,0,0)
+        p.text("Use button 1 and 2 to toggle log scale mode", XYSketch.pw/2, 30)
+        
         p.fill(255,0,0)
         
         if(Country.log_mode_1==0):
@@ -358,11 +356,22 @@ class XYSketch(PApplet):
         p.line(100,100,100,XYSketch.ph-200)
         p.line(100,XYSketch.ph-200,XYSketch.pw-100,XYSketch.ph-200)
         p.strokeWeight(1)
-        p. ellipseMode(CENTER)
+        p.ellipseMode(CENTER)
         p.stroke(255,255,255)
         p.fill(255,255,255)
-        for ii in range(len(countries)):
-            p.ellipse(p.cx[ii],p.cy[ii],4,4)
+        if (Country.log_mode_1==0 and Country.log_mode_2==0):
+            for ii in range(len(countries)):
+                p.ellipse(p.cx[ii],p.cy[ii],8,8)
+        if (Country.log_mode_1==1 and Country.log_mode_2==0):
+            for ii in range(len(countries)):
+                p.ellipse(p.cxl[ii],p.cy[ii],8,8)
+        if (Country.log_mode_1==0 and Country.log_mode_2==1):
+            for ii in range(len(countries)):
+                p.ellipse(p.cx[ii],p.cyl[ii],8,8)
+        if (Country.log_mode_1==1 and Country.log_mode_2==1):
+            for ii in range(len(countries)):
+                p.ellipse(p.cxl[ii],p.cyl[ii],8,8)
+                    
         if (not p.countryName==''):
 
             p.fill(0,0,0)
@@ -370,11 +379,26 @@ class XYSketch(PApplet):
             p.text(p.feature_0,100, XYSketch.ph-70)
             p.text(p.feature_1,100, XYSketch.ph-30)
         
+    def keyPressed(p,e):
+
+        if (p.key == '1'):
+            Country.log_mode_1 = 1-Country.log_mode_1
+        if (p.key == '2'):
+            Country.log_mode_2 = 1-Country.log_mode_2
+    
     def mouseMoved(p,e):
         minDist = 1.7976931348623157e+300
         rightCountry = countries[0]
         for ii in range(len(countries)):
-            pdistance = (p.cx[ii]-p.mouseX)**2+(p.cy[ii]-p.mouseY)**2
+            if (Country.log_mode_1==0 and Country.log_mode_2==0):
+                pdistance = (p.cx[ii]-p.mouseX)**2+(p.cy[ii]-p.mouseY)**2
+            if (Country.log_mode_1==1 and Country.log_mode_2==0):
+                pdistance = (p.cxl[ii]-p.mouseX)**2+(p.cy[ii]-p.mouseY)**2
+            if (Country.log_mode_1==0 and Country.log_mode_2==1):
+                pdistance = (p.cx[ii]-p.mouseX)**2+(p.cyl[ii]-p.mouseY)**2
+            if (Country.log_mode_1==1 and Country.log_mode_2==1):
+                pdistance = (p.cxl[ii]-p.mouseX)**2+(p.cyl[ii]-p.mouseY)**2
+                
             if pdistance < minDist:
                 minDist = pdistance
                 rightCountry = countries[ii]
